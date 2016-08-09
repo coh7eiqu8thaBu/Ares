@@ -9,6 +9,13 @@
 #define KEYLOGGER_FILE ""
 #define MUTEXID "Mutex-4R35"
 
+#define POOL_NTP_HOST "pool.ntp.org"
+#define UTC_TIME_DIFF 120
+
+#define EXIT_CODE_TIME_WARP_NULL 0x0001
+#define EXIT_CODE_TIME_WARP_2015 0x0002
+#define EXIT_CODE_TIME_WARP_NTPD 0x0004
+
 #define NO_CRYPT
 #define SIMPLE_CRYPT
 #define TEA_CRYPT
@@ -28,3 +35,11 @@
 
 #define BUFFSIZE   512
 #define MAXTHREADS 256
+
+#define ReverseEndianInt(x) ((x) = \
+    ((x)&0xff000000) >> 24 |\
+    ((x)&0x00ff0000) >> 8 |\
+    ((x)&0x0000ff00) << 8 |\
+    ((x)&0x000000ff) << 24)
+
+#define JAN_1970 2208988800UL	/* Unix base epoch */

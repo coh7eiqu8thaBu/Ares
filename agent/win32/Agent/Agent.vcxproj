@@ -93,12 +93,13 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_USING_V110_SDK71_;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -126,12 +127,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\src\agent.h" />
+    <ClInclude Include="..\src\define.h" />
     <ClInclude Include="..\src\http.h" />
+    <ClInclude Include="..\src\includes.h" />
+    <ClInclude Include="..\src\ntp.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\agent.cpp" />
     <ClCompile Include="..\src\http.cpp" />
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\noav.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
