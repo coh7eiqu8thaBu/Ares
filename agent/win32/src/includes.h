@@ -21,5 +21,4 @@ typedef struct KEYLOG
 {
 	int threadnum;
 	bool state;
-
 } KEYLOG;

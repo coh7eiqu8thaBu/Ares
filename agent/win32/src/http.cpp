@@ -2,7 +2,6 @@
 
 using namespace std;
 
-
 RequestURL dissect_url(std::string url) {
 	size_t found;
 	RequestURL rURL;
@@ -51,7 +50,6 @@ RequestURL dissect_url(std::string url) {
 	return rURL;
 }
 
-
 std::string url_encode(const std::string& source)
 {
 	const char DEC2HEX[] = "0123456789ABCDEF";
@@ -75,9 +73,7 @@ std::string url_encode(const std::string& source)
 	return result;
 }
 
-
 std::vector<unsigned char> http_request(const std::string& url, const std::string& method, char* const body, size_t body_size, const std::string& headers, const std::string& user_agent) {
-
 	std::vector<unsigned char> response;
 
 	HINTERNET hint;
@@ -96,7 +92,7 @@ std::vector<unsigned char> http_request(const std::string& url, const std::strin
 	HINTERNET req;
 	LPCSTR accept[] = { "*/*", NULL };
 
-	req = HttpOpenRequestA(co, method.c_str(), reqURL.path.c_str(), 0, 0, accept, (reqURL.protocol == "https") ? 
+	req = HttpOpenRequestA(co, method.c_str(), reqURL.path.c_str(), 0, 0, accept, (reqURL.protocol == "https") ?
 		INTERNET_FLAG_SECURE | INTERNET_FLAG_IGNORE_CERT_CN_INVALID | INTERNET_FLAG_IGNORE_CERT_DATE_INVALID | INTERNET_FLAG_RELOAD : INTERNET_FLAG_RELOAD, 0);
 	if (!req) {
 		return response;

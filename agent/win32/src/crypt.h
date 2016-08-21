@@ -12,8 +12,8 @@ void encryptstrings(int authsize, int versionsize, SOCKET sock, char *chan, BOOL
 #endif
 
 #ifdef SIMPLE_CRYPT
-char *decrypt(char *str,int key);
-char *encrypt(char *str,int key);
+char *decrypt(char *str, int key);
+char *encrypt(char *str, int key);
 #endif
 
 #ifdef TEA_CRYPT

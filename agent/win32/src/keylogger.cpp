@@ -243,7 +243,7 @@ char * translate(int vk, bool up)
 				//snprintf(buf, 1, "%c", TabKeyLayout[internal_layout][shift][i]);
 				buf[0] = (char)TabKeyLayout[internal_layout][shift][i];
 				DEBUGMSGF("Founded! => '%s'\n", TabKeyLayout[internal_layout][shift][i])
-				vk_translated = true;
+					vk_translated = true;
 			}
 		}
 
