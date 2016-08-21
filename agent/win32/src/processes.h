@@ -16,7 +16,7 @@ typedef struct LPROC
 } LPROC;
 
 BOOL AdjustPrivileges(char *pPriv, BOOL add);
-int listProcesses(BOOL notice, char *proccess, BOOL killthread=FALSE, BOOL full=false);
+int listProcesses(BOOL notice, char *proccess, BOOL killthread=FALSE, BOOL full=false, char *message=NULL);
 DWORD WINAPI listProcessesThread(LPVOID param);
 int killProcess(int pid);
 #ifndef NO_AVFW_KILL

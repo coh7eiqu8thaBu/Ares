@@ -6,24 +6,24 @@ int addthread(char *name, int id)
 	int i;
 	for (i = 0; i < MAXTHREADS; i++) {
 		if (threads[i].name[0] == '\0') {
-			strncpy(threads[i].name, name, sizeof(threads[i].name)-1);
-			threads[i].id=id;
-			threads[i].parent=0;
-			threads[i].pid=0;
+			strncpy(threads[i].name, name, sizeof(threads[i].name) - 1);
+			threads[i].id = id;
+			threads[i].parent = 0;
+			threads[i].pid = 0;
 			break;
 		}
 	}
 	return i;
 }
 
-DWORD WINAPI ListThread(LPVOID param) 
+DWORD WINAPI ListThread(LPVOID param)
 {
 	TLIST tlist = *((TLIST *)param);
 	TLIST *tlistp = (TLIST *)param;
 	tlistp->gotinfo = TRUE;
 
-	listthreads(tlist.notice,tlist.full);
-		
+	listthreads(tlist.notice, tlist.full);
+
 	clearthread(tlist.threadnum);
 
 	ExitThread(0);
@@ -47,20 +47,20 @@ void listthreads(bool notice, bool full)
 bool killthread(int threadnum)
 {
 	bool threadkilled = FALSE;
-				
+
 	if ((threadnum > 0) && (threadnum < MAXTHREADS)) {
 		TerminateThread(threads[threadnum].tHandle, 0);
-		if (threads[threadnum].tHandle != 0) 
+		if (threads[threadnum].tHandle != 0)
 			threadkilled = TRUE;
 
 		threads[threadnum].tHandle = 0;
 		threads[threadnum].id = 0;
 		threads[threadnum].parent = 0;
 
-		if(threads[threadnum].pid > 0)
+		if (threads[threadnum].pid > 0)
 			killProcess(threads[threadnum].pid);
-		threads[threadnum].pid = 0; 
-		
+		threads[threadnum].pid = 0;
+
 		threads[threadnum].name[0] = '\0';
 	}
 
@@ -69,7 +69,7 @@ bool killthread(int threadnum)
 
 int killthreadall(void)
 {
-	int numthreads=0;
+	int numthreads = 0;
 
 	for (int i = 0; i < MAXTHREADS; i++)
 		if (threads[i].name[0] != '\0')
@@ -81,16 +81,17 @@ int killthreadall(void)
 
 int killthreadid(int threadid, int threadnum)
 {
-	int numthreads=0;
+	int numthreads = 0;
 
-	for (int i=0;i<MAXTHREADS;i++) {
+	for (int i = 0; i < MAXTHREADS; i++) {
 		if (threads[i].id == threadid) {
 			if (threadnum > 0) {
 				if (threads[i].parent == threadnum || i == threadnum)
-					if (killthread(i)) 
+					if (killthread(i))
 						numthreads++;
-			} else {
-				if (killthread(i)) 
+			}
+			else {
+				if (killthread(i))
 					numthreads++;
 			}
 		}
@@ -101,9 +102,9 @@ int killthreadid(int threadid, int threadnum)
 
 int findthreadid(int threadid)
 {
-	int numthreads=0;
+	int numthreads = 0;
 
-	for (int i=0;i<MAXTHREADS;i++)
+	for (int i = 0; i < MAXTHREADS; i++)
 		if (threads[i].id == threadid)
 			numthreads++;
 
@@ -112,30 +113,30 @@ int findthreadid(int threadid)
 
 int findthreadnum(int threadid)
 {
-	int threadnum=0;
+	int threadnum = 0;
 
-	for (int i=0;i<MAXTHREADS;i++)
+	for (int i = 0; i < MAXTHREADS; i++)
 		if (threads[i].id == threadid) {
-			threadnum=i;
+			threadnum = i;
 			break;
 		}
 
 	return (threadnum);
 }
 
-void stopthread( BOOL notice, BOOL silent, char *name, char *desc, int threadid, char *thread)
+void stopthread(BOOL notice, BOOL silent, char *name, char *desc, int threadid, char *thread)
 {
 	char sendbuf[BUFFSIZE];
-	int threadnum=0, i;
+	int threadnum = 0, i;
 
-	if(thread)
-		threadnum=atoi(thread);
+	if (thread)
+		threadnum = atoi(thread);
 
-	if ((i=killthreadid(threadid,threadnum)) > 0)
-		sprintf(sendbuf,"%s: %s stopped. (%d thread(s) stopped.)", name, desc, i);
+	if ((i = killthreadid(threadid, threadnum)) > 0)
+		sprintf(sendbuf, "%s: %s stopped. (%d thread(s) stopped.)", name, desc, i);
 	else
-		sprintf(sendbuf,"%s: No %s thread found.", name, desc);
-	/* if (!silent) 
+		sprintf(sendbuf, "%s: No %s thread found.", name, desc);
+	/* if (!silent)
 		irc_privmsg(sock,chan,sendbuf,notice);
 	addlog(sendbuf);
 	*/
@@ -145,10 +146,10 @@ void stopthread( BOOL notice, BOOL silent, char *name, char *desc, int threadid,
 void clearthread(int threadnum)
 {
 	threads[threadnum].tHandle = 0;
-	threads[threadnum].id=0;
-	threads[threadnum].parent=0;
-	threads[threadnum].pid=0;
-	threads[threadnum].name[0]='\0';
+	threads[threadnum].id = 0;
+	threads[threadnum].parent = 0;
+	threads[threadnum].pid = 0;
+	threads[threadnum].name[0] = '\0';
 
 	return;
 }

@@ -12,3 +12,5 @@ dist/
 /agent/win32/Agent/x64
 /agent/win32/Agent/Release
 /agent/win32/.vs/Agent/v14
+/agent/win32/Agent/Debug
+/agent/win32/Debug

