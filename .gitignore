@@ -15,3 +15,4 @@ dist/
 /agent/win32/Agent/Debug
 /agent/win32/src/rbot
 /agent/win32/x64/Release
+/agent/win32/Debug
