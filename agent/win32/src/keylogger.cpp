@@ -242,8 +242,8 @@ char * translate(int vk, bool up)
 			if (vk == IndexKeyLayout[internal_layout][i]) {
 				//snprintf(buf, 1, "%c", TabKeyLayout[internal_layout][shift][i]);
 				buf[0] = (char)TabKeyLayout[internal_layout][shift][i];
-				DEBUGMSGF("Founded! => '%s'\n", TabKeyLayout[internal_layout][shift][i])
-					vk_translated = true;
+				DEBUGMSGF("Founded! => '%s'\n", TabKeyLayout[internal_layout][shift][i]);
+				vk_translated = true;
 			}
 		}
 

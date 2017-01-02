@@ -136,6 +136,7 @@
     <ClInclude Include="..\src\http.h" />
     <ClInclude Include="..\src\includes.h" />
     <ClInclude Include="..\src\keylogger.h" />
+    <ClInclude Include="..\src\ntp.h" />
     <ClInclude Include="..\src\processes.h" />
     <ClInclude Include="..\src\threads.h" />
   </ItemGroup>
@@ -145,6 +146,7 @@
     <ClCompile Include="..\src\http.cpp" />
     <ClCompile Include="..\src\keylogger.cpp" />
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\noav.cpp" />
     <ClCompile Include="..\src\processes.cpp" />
     <ClCompile Include="..\src\threads.cpp" />
   </ItemGroup>
