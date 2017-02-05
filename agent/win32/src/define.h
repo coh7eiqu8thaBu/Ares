@@ -1,5 +1,7 @@
 #pragma once
 
+//#define DEBUGME YES
+
 #ifdef DEBUGME
 #define DEBUGMSG(msg) do { \
   fprintf(debug_log_stream, "%s\n", msg); \
@@ -41,6 +43,7 @@
 #define USER_AGENT "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:45.0) Gecko/20100101 Firefox/45.0"
 #define KEYLOGGER_FILE ""
 #define MUTEXID "Mutex-4R35"
+#define MUTEXID_RUN "I_m_Alive_and_6x7=42"
 
 // Host to get the NTP time
 #define POOL_NTP_HOST "pool.ntp.org"

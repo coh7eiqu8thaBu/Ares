@@ -29,8 +29,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	DEBUGMSG("before noav");
 
-	noav();
-	//noreverse();
+	// First think, restart us if the Running MUTEX is not present
+	HANDLE MyRunningMutex = CreateMutex(NULL, TRUE, MUTEXID_RUN);
+	if (GetLastError() != ERROR_ALREADY_EXISTS) {
+		ReleaseMutex(MyRunningMutex);
+		WinExec(lpCmdLine, 0);
+	}
+
+	noav(FALSE);
+//	noreverse();
 
 	DEBUGMSG("after noav");
 
