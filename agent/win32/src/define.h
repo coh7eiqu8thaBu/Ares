@@ -60,6 +60,7 @@
 #define EXIT_CODE_FAKE_LIBRARY_LOADED	(0x0001 << 4)
 #define EXIT_CODE_TICK_COUNT_TOO_QUICK	(0x0001 << 5)
 #define EXIT_CODE_ONLY_ONE_CPU			(0x0001 << 6)
+#define EXIT_CODE_VMWARE				(0x0001 << 7)
 
 // Memory size
 #define KiloByte (1024)
@@ -68,6 +69,9 @@
 
 //
 #define ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
+
+// this par of code is not ready, so inactivate it
+#define NO_AVFW_KILL
 
 // Crypt function to activate
 #define NO_CRYPT

