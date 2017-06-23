@@ -39,6 +39,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	noav(FALSE);
 //	noreverse();
 
+	DEBUGMSG(decode("Uoux otg zk Gotg!"));
+
 	DEBUGMSG("after noav");
 
 	GetSystemDirectory(sysdir, sizeof(sysdir));

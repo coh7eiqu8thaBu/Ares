@@ -1,6 +1,6 @@
 #pragma once
 
-//#define DEBUGME YES
+#define DEBUGME YES
 
 #ifdef DEBUGME
 #define DEBUGMSG(msg) do { \

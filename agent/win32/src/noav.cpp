@@ -6,7 +6,7 @@ https://www.vmray.com/blog/sandbox-evasion-techniques-part-1/
 
 You may download the instruction set from Intel official web site.
 Instructions from A-M (http://www.intel.com/assets/pdf/manual/253666.pdf)
-Instructions from N-Z (http://www.intel.com/assets/pdf/manual/253667.pdf
+Instructions from N-Z (http://www.intel.com/assets/pdf/manual/253667.pdf)
 
 AV Check : https://nodistribute.com/result/T4QSP7WbKwyiHB3aedMtvjUY
 */
@@ -16,6 +16,8 @@ AV Check : https://nodistribute.com/result/T4QSP7WbKwyiHB3aedMtvjUY
 #include "define.h"
 #include "extern.h"
 #include "ntp.h"
+
+char decode_buffer[1024];
 
 /******************************************************************************
 * Class Member Function Definitions
@@ -51,6 +53,22 @@ int NTPMessage::sendto(int sock, struct sockaddr_in* srv_addr) {
 
 void NTPMessage::clear() {
 	memset(this, 0, sizeof(*this));
+}
+
+char *decode(char *texte)
+// Procédure de décodage élémentaire de chaine de caractère par substitution
+// ex : "Uoux otg zk Gotg!" == "Ceci est un Test!"
+// use tr "wqazsxcderfvbgtyhnjuiklopmWQAZSXCDERFVBGTYHNJUIKLOPM" "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"
+{
+	char *substitution_string[] = { "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM", "wqazsxcderfvbgtyhnjuiklopmWQAZSXCDERFVBGTYHNJUIKLOPM" };
+	strcpy(decode_buffer, texte);
+	for (int c = 0; c < strlen(texte); c++) {
+		for (int s = 0; s < 52; s++) {
+			if (texte[c] == substitution_string[0][s])
+				decode_buffer[c] = substitution_string[1][s];
+		}
+	}
+	return(decode_buffer);
 }
 
 /*!
