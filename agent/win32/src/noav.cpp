@@ -302,6 +302,72 @@ BOOL CheckIfOneCPU(void)
 	return nbcpu;
 }
 
+void Some_ASM_trick(void)
+{
+	// Get From https://www.opensc.ws/showthread.php?t=20894
+	DEBUGMSG("Before Some_ASM_trick");
+	__asm
+	{
+		/* Save used registers so we can call this code anywhere */
+		push ebx
+		push eax
+		push ecx
+		/* We are going to look for breakpoints, this will be obviously be detected */
+		xor ebx, ebx
+		mov bl, 0xCC
+	blocStart:
+		/* Get addr and size of block we want to check against breakpoints */
+		mov eax, blocStart
+		mov ecx, blocEnd
+		sub ecx, blocStart
+	antiBpLoop :
+		// check if the opcode is 0xCC
+		cmp byte ptr[eax], bl
+		jne continueLoop
+		// If detected breakpoint opcode is replaced by a short jump opcode
+		mov[eax], 0xEB
+	continueLoop :
+		inc eax
+		dec ecx
+		/* Loop */
+		jnz antiBpLoop
+		/* Here we finished to remove breakpoints */
+		mov ecx, 2
+		/* Going to insert garbage code */
+		xor eax, eax
+		jz valid
+		// Garbage code confusing disassembler using add opcode (0x02)
+		// This is done to hide the 0xCC opcode coming next
+		__asm __emit(0x02)
+	valid:
+		 // Software breakpoint to be replaced by jump. If not replaced, code fails
+		 __asm __emit(0xcc)
+		 // offset to jump (jump to anti debug code). This is executed if previous line breakpoint is not replaced.
+		 __asm __emit(0x02)
+		 ret
+		 /* Garbage code confusing disassembler using long Add rmw, the code will fail here if CC replaced by something else  */
+		 __asm __emit(0x81)
+		 /* Anti debug code ) */
+		 sub ebx, 0xB4
+		 // Now ebx = 0x18
+		 mov eax, dword ptr fs : [ebx]
+		 add ebx, ebx
+		 // 0x30 = 0x18 + 0x18
+		 mov eax, dword ptr[eax + ebx]
+		 // This is why we moved 2 in ecx register
+		 cmp byte ptr[eax + ecx], ch
+		 pop ecx
+		 pop eax
+		 pop ebx
+		 je blocEnd
+		 /* Garbage code confusing disassembler using long jump. Also this jump is called if process is debugged, leading to crash */
+		 __asm __emit(0xea)
+	 blocEnd:
+		// Behind that  code will be unreadable (probably display as constant). 
+	}
+	DEBUGMSG("After Some_ASM_trick");
+}
+
 BOOL vmware(void)
 {
 	unsigned long _EBX;
@@ -367,6 +433,8 @@ BOOL noav(BOOL InThread = TRUE)
 		DEBUGMSG("EXIT_CODE_VMWARE");
 		ExitCode &= EXIT_CODE_VMWARE;
 	}
+
+	Some_ASM_trick();
 
 	/* 	This method also exploits the time deadline on each AV scan, we simply allocate
 	nearly 42 Mb of memory then we will fill it with some bytes, at the end we will

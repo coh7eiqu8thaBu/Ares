@@ -23,11 +23,11 @@
 
 #define ASMGARBAGE __asm { \
 	PUSH EAX; \
-	XOR EAX,EAX; \
-	JZ J; \
-	MOV EAX,[SP+0x04]; \
-	__asm __emit(0x3F); \
-	J: \
+	XOR EAX, EAX; \
+	jz valid; \
+	MOV EAX, [SP + 0x04]; \
+	__asm __emit(0xea); \
+	valid: \
 	POP EAX; \
 }
 

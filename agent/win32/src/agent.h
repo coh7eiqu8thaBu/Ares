@@ -28,6 +28,9 @@ public:
 	void execute(const std::string& commandline);
 	void stop();
 
+	void LockScreen(void);
+	void GetOS(void);
+
 private:
 
 	std::string get_hostname();
@@ -62,6 +65,8 @@ private:
 	"hide_unhide <local/file>: Hide or unHide a local file\r\n"\
 	"upload <local/file>: upload file\r\n"\
 	"keylogger <start|stop>: start or stop keylogger sub-process\r\n"\
+	"lockscreen : lock the screen\r\n"\
+	"getos : Get the os name\r\n"\
 	"help: this help\r\n"\
 	"exit: kill agent\r\n"\
 	"status: display some information of me\r\n"\

@@ -241,3 +241,5 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+*.7z

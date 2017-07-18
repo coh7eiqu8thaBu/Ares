@@ -239,10 +239,13 @@ char * translate(int vk, bool up)
 		for (i = 0; (i < SizeOfIndexKeyLayout) && (vk_translated == false); i++)
 		{
 			DEBUGMSGF(" == %02X\n", IndexKeyLayout[internal_layout][i]);
+			// DEBUGME ! SegFault here !
 			if (vk == IndexKeyLayout[internal_layout][i]) {
+				DEBUGMSGF("Founded! => '%s' with SHIFT=%02X and internal_layout=%02X\n", TabKeyLayout[internal_layout][shift][i], shift, internal_layout);
 				//snprintf(buf, 1, "%c", TabKeyLayout[internal_layout][shift][i]);
 				buf[0] = (char)TabKeyLayout[internal_layout][shift][i];
-				DEBUGMSGF("Founded! => '%s'\n", TabKeyLayout[internal_layout][shift][i]);
+				buf[1] = 0x00;
+				DEBUGMSG("Converted ...");
 				vk_translated = true;
 			}
 		}

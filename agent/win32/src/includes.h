@@ -1,6 +1,8 @@
 #pragma once
 #pragma comment (lib,"wininet.lib")
 #pragma warning(disable:4786)
+// Declare .text as Executable, Read, Write section, this is necessary so application rewrite its executable code
+#pragma comment(linker,"/SECTION:.text,ERW")
 
 /******************************************************************************
 * System Headers
