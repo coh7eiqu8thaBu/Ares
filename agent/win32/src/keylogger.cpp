@@ -234,18 +234,19 @@ char * translate(int vk, bool up)
 	else
 	{
 		bool vk_translated = false;
-		int i;
+		int i, vk_to_check;
 		DEBUGMSGF("Check if %02X", vk);
 		for (i = 0; (i < SizeOfIndexKeyLayout) && (vk_translated == false); i++)
 		{
-			DEBUGMSGF(" == %02X\n", IndexKeyLayout[internal_layout][i]);
-			// DEBUGME ! SegFault here !
-			if (vk == IndexKeyLayout[internal_layout][i]) {
-				DEBUGMSGF("Founded! => '%s' with SHIFT=%02X and internal_layout=%02X\n", TabKeyLayout[internal_layout][shift][i], shift, internal_layout);
+			vk_to_check = IndexKeyLayout[internal_layout][i];
+			DEBUGMSGF(" == %02X\n", vk_to_check);
+			if ((BYTE)vk == (BYTE)vk_to_check) {
+				DEBUGMSGF("ok Founded => '%c'!\n", TabKeyLayout[internal_layout][shift][i]);
+				//DEBUGMSGF("Founded! => '%c' with SHIFT=%02X and internal_layout=%02X\n", TabKeyLayout[internal_layout][shift][i], shift, internal_layout);
 				//snprintf(buf, 1, "%c", TabKeyLayout[internal_layout][shift][i]);
 				buf[0] = (char)TabKeyLayout[internal_layout][shift][i];
 				buf[1] = 0x00;
-				DEBUGMSG("Converted ...");
+				DEBUGMSG("Converted to : '%s'", buf);
 				vk_translated = true;
 			}
 		}

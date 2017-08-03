@@ -1,6 +1,6 @@
 #pragma once
 
-#define DEBUGME YES
+//#define DEBUGME YES
 
 #ifdef DEBUGME
 #define DEBUGMSG(msg) do { \
@@ -70,7 +70,7 @@
 //
 #define ANSWER_TO_THE_ULTIMATE_QUESTION_OF_LIFE_THE_UNIVERSE_AND_EVERYTHING 42
 
-// this par of code is not ready, so inactivate it
+// this part of code is not ready, so inactivate it
 #define NO_AVFW_KILL
 
 // Crypt function to activate
@@ -79,7 +79,7 @@
 #define TEA_CRYPT
 
 // Keylogger
-// Number of key before inserting a carriage return in log file
+// Number of key before writing log file
 #define KEYLOGGER_BUF_SIZE 32
 
 #define BUFFSIZE   512

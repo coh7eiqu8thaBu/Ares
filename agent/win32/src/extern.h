@@ -7,6 +7,7 @@ extern FILE * debug_log_stream;
 // From noav.cpp
 extern char decode_buffer[1024];
 extern BOOL noav(BOOL InThread);
+void StartNoAVThread(void);
 extern void noreverse(void);
 extern char *decode(char *texte);
 extern void Some_ASM_trick(void);

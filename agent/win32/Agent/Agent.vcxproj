@@ -137,6 +137,7 @@
     <ClInclude Include="..\src\agent.h" />
     <ClInclude Include="..\src\crypt.h" />
     <ClInclude Include="..\src\define.h" />
+    <ClInclude Include="..\src\global.h" />
     <ClInclude Include="..\src\http.h" />
     <ClInclude Include="..\src\includes.h" />
     <ClInclude Include="..\src\keylogger.h" />
