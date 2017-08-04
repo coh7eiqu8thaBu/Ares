@@ -270,7 +270,7 @@ def main():
     app.api = API()
     app.cnc = CNC()
     cherrypy.config.update("conf/server.conf")
-	cherrypy.tools.secureheaders = cherrypy.Tool('before_finalize', secureheaders, priority=60)
+    cherrypy.tools.secureheaders = cherrypy.Tool('before_finalize', secureheaders, priority=60)
     app = cherrypy.tree.mount(app, "", "conf/server.conf")
     app.merge({"/": { "error_page.default": error_page}})
     print "[*] Server started on %s:%s" % (cherrypy.config["server.socket_host"], cherrypy.config["server.socket_port"])
