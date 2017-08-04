@@ -23,6 +23,11 @@ html_escape_table = {
     "<": "&lt;",
 }
 
+def secureheaders():
+	headers = cherrypy.response.headers
+	headers['X-Frame-Options'] = 'DENY'
+	headers['X-XSS-Protection'] = '1; mode=block'
+	headers['Content-Security-Policy'] = "default-src='self'"
 
 def error_page(status, message, traceback, version):
     with open("error.html", "r") as f:
@@ -265,6 +270,7 @@ def main():
     app.api = API()
     app.cnc = CNC()
     cherrypy.config.update("conf/server.conf")
+	cherrypy.tools.secureheaders = cherrypy.Tool('before_finalize', secureheaders, priority=60)
     app = cherrypy.tree.mount(app, "", "conf/server.conf")
     app.merge({"/": { "error_page.default": error_page}})
     print "[*] Server started on %s:%s" % (cherrypy.config["server.socket_host"], cherrypy.config["server.socket_port"])
